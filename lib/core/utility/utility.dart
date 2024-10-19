@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:demo_dua_prooject/core/config/dua_custom_theme_colors.dart';
 import 'package:demo_dua_prooject/core/config/dua_screen.dart';
 import 'package:demo_dua_prooject/core/external_libs/services/keyboard_service.dart';
@@ -11,6 +12,7 @@ import 'package:demo_dua_prooject/core/utility/trial_utility.dart';
 import 'package:demo_dua_prooject/presentation/muslim_dua.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -305,6 +307,40 @@ Future<void> sendEmail({
   );
   final String urlString = uri.toString();
   await openUrl(url: urlString);
+}
+
+Future<void> moveDatabaseFromAssetToInternal({
+  required String assetPath,
+  required File file,
+}) async {
+  await catchFutureOrVoid(() async {
+    // ignore: avoid_slow_async_io
+    final bool databaseExists = await file.exists();
+    if (databaseExists) return;
+
+    final ByteData blob = await rootBundle.load(assetPath);
+    final ByteBuffer buffer = blob.buffer;
+    final Uint8List dbAsBytes =
+        buffer.asUint8List(blob.offsetInBytes, blob.lengthInBytes);
+
+    await file.parent.create(recursive: true);
+    await file.create(recursive: true);
+
+    await writeFileAsBytesInIsolate(file, dbAsBytes);
+  });
+}
+
+Future<void> writeFileAsBytesInIsolate(File file, List<int> dbAsBytes) async {
+  await compute(_writeFileAsBytes, (file, dbAsBytes));
+}
+
+bool _writeFileAsBytes((File, List<int>) param) {
+  catchAndReturn(() {
+    final (file, dbAsBytes) = param;
+    file.writeAsBytesSync(dbAsBytes);
+    return true;
+  });
+  return false;
 }
 
 /// Launches the Facebook page of the app or opens a fallback URL in a browser

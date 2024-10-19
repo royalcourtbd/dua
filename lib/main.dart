@@ -15,7 +15,7 @@ Future<void> _init() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await ServiceLocator.setUp();
-  await _setMaxRefreshRate();
+  // await _setMaxRefreshRate();
 }
 
 Future<void> _setMaxRefreshRate() async {

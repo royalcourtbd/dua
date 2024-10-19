@@ -1,6 +1,14 @@
 import 'dart:async';
 import 'package:demo_dua_prooject/core/base/base_presenter.dart';
+import 'package:demo_dua_prooject/data/data_sources/local_data_source/dua_category_local_data_source.dart';
+import 'package:demo_dua_prooject/data/services/cache_data.dart';
+import 'package:demo_dua_prooject/data/services/database_service.dart';
+import 'package:demo_dua_prooject/data/services/error_message_handler_impl.dart';
+import 'package:demo_dua_prooject/domain/repository/dua_category_repository.dart';
+import 'package:demo_dua_prooject/domain/service/error_message_handler.dart';
+import 'package:demo_dua_prooject/domain/use_case/get_all_dua_category_use_case.dart';
 import 'package:demo_dua_prooject/presentation/home/presenter/home_presenter.dart';
+import 'package:demo_dua_prooject/data/repository/dua_category_repository_impl.dart';
 import 'package:get_it/get_it.dart';
 
 // Implementation Note:
@@ -63,17 +71,31 @@ class ServiceLocator {
 
   Future<void> _setUpFirebaseServices() async {}
 
-  Future<void> _setUpRepositories() async {}
+  Future<void> _setUpRepositories() async {
+    _serviceLocator.registerLazySingleton<DuaCategoryRepository>(
+        () => DuaCategoryRepositoryImpl(locate()));
+  }
 
   Future<void> _setUpServices() async {
+    _serviceLocator
+      ..registerLazySingleton<DuasDatabase>(() => DuasDatabase())
+      ..registerLazySingleton<ErrorMessageHandler>(ErrorMessageHandlerImpl.new)
+      ..registerLazySingleton(() => CacheData.new);
     await _setUpFirebaseServices();
   }
 
-  Future<void> _setUpDataSources() async {}
-
-  Future<void> _setUpPresenters() async {
-    _serviceLocator.registerFactory(() => loadPresenter(HomePresenter()));
+  Future<void> _setUpDataSources() async {
+    _serviceLocator
+        .registerLazySingleton(() => DuaCategoryLocalDataSource(locate()));
   }
 
-  Future<void> _setUpUseCase() async {}
+  Future<void> _setUpPresenters() async {
+    _serviceLocator
+        .registerFactory(() => loadPresenter(HomePresenter(locate())));
+  }
+
+  Future<void> _setUpUseCase() async {
+    _serviceLocator
+        .registerFactory(() => GetAllDuaCategoryUseCase(locate(), locate()));
+  }
 }
